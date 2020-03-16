@@ -6,30 +6,31 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import db.interfaces.DBManager;
+import db.interfaces.DogManager;
 
 public class SQLiteManager implements DBManager {
 
 	private Connection c;
-	
+	private DogManager dog;
+
 	public SQLiteManager() {
 		super();
 	}
-	
+
 	@Override
 	public void connect() {
-		// Open database connection
 		try {
+			// Open database connection
 			Class.forName("org.sqlite.JDBC");
 			this.c = DriverManager.getConnection("jdbc:sqlite:./db/dogs.db");
 			c.createStatement().execute("PRAGMA foreign_keys=ON");
+			// Create DogManager
+			dog = new SQLiteDogManager(c);
+			// We could initialize other managers here
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-	}
-	
-	protected Connection getConnection() {
-		return c;
+
 	}
 
 	@Override
@@ -46,19 +47,23 @@ public class SQLiteManager implements DBManager {
 		Statement stmt1;
 		try {
 			stmt1 = c.createStatement();
-			String sql1 = "CREATE TABLE dogs "
-					   + "(id     INTEGER  PRIMARY KEY AUTOINCREMENT,"
-					   + " name   TEXT   NOT NULL, "
-					   + " breed  TEXT   NOT NULL, "
-					   + " weight FLOAT  NOT NULL, "
-					   + " admissionDate DATE   NOT NULL, "
-					   + " releaseDate DATE)";
+			String sql1 = "CREATE TABLE dogs " + "(id     INTEGER  PRIMARY KEY AUTOINCREMENT,"
+					+ " name   TEXT   NOT NULL, " + " breed  TEXT   NOT NULL, " + " weight FLOAT  NOT NULL, "
+					+ " admissionDate DATE   NOT NULL, " + " releaseDate DATE)";
 			stmt1.executeUpdate(sql1);
 			stmt1.close();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			if (e.getMessage().contains("already exists")) {
+			} else {
+				e.printStackTrace();
+			}
+
 		}
-		
+
 	}
 
+	@Override
+	public DogManager getDogManager() {
+		return dog;
+	}
 }

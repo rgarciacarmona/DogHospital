@@ -29,6 +29,18 @@ public class Dog implements Serializable {
 	
 	
 
+	public Dog(Integer id, String name, String breed, Float weight, Date admissionDate, Date releaseDate) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.breed = breed;
+		this.weight = weight;
+		this.admissionDate = admissionDate;
+		this.releaseDate = releaseDate;
+	}
+
+
+
 	public Dog(String name, String breed, Float weight, Date admissionDate) {
 		super();
 		this.name = name;
