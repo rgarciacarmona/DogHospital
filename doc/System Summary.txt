@@ -1,0 +1,8 @@
+DOG HOSPITAL
+------------
+
+This is going to be an application for managing the admissions of dogs to a hospital.
+
+This application is going to be used by the doctors and the dogs' owners.
+
+Is going to have a text UI.
