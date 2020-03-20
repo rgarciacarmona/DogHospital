@@ -2,6 +2,8 @@ package pojos;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Dog implements Serializable {
 
@@ -9,15 +11,15 @@ public class Dog implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 6891296751142184360L;
-	
+
 	private Integer id;
 	private String name;
 	private String breed;
 	private Float weight;
 	private Date admissionDate;
 	private Date releaseDate;
-	
-	
+	private List<Medicine> medicines;
+
 	public Dog(Integer id, String name, String breed, Float weight, Date admissionDate) {
 		super();
 		this.id = id;
@@ -25,9 +27,8 @@ public class Dog implements Serializable {
 		this.breed = breed;
 		this.weight = weight;
 		this.admissionDate = admissionDate;
+		this.medicines = new ArrayList<Medicine>();
 	}
-	
-	
 
 	public Dog(Integer id, String name, String breed, Float weight, Date admissionDate, Date releaseDate) {
 		super();
@@ -37,9 +38,9 @@ public class Dog implements Serializable {
 		this.weight = weight;
 		this.admissionDate = admissionDate;
 		this.releaseDate = releaseDate;
+		this.medicines = new ArrayList<Medicine>();
+
 	}
-
-
 
 	public Dog(String name, String breed, Float weight, Date admissionDate) {
 		super();
@@ -47,9 +48,9 @@ public class Dog implements Serializable {
 		this.breed = breed;
 		this.weight = weight;
 		this.admissionDate = admissionDate;
+		this.medicines = new ArrayList<Medicine>();
+
 	}
-
-
 
 	public Dog() {
 		super();
@@ -105,8 +106,13 @@ public class Dog implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Dog [id=" + id + ", name=" + name + ", breed=" + breed + ", weight=" + weight + ", admissionDate="
-				+ admissionDate + ", releaseDate=" + releaseDate + "]";
+		if (medicines.isEmpty()) {
+			return "Dog [id=" + id + ", name=" + name + ", breed=" + breed + ", weight=" + weight + ", admissionDate="
+					+ admissionDate + ", releaseDate=" + releaseDate + "]";
+		} else {
+			return "Dog [id=" + id + ", name=" + name + ", breed=" + breed + ", weight=" + weight + ", admissionDate="
+					+ admissionDate + ", releaseDate=" + releaseDate + ", medicines=" + medicines + "]";
+		}
 	}
 
 	@Override
@@ -132,6 +138,14 @@ public class Dog implements Serializable {
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
+	}
+
+	public List<Medicine> getMedicines() {
+		return medicines;
+	}
+
+	public void setMedicines(List<Medicine> medicines) {
+		this.medicines = medicines;
 	}
 
 }

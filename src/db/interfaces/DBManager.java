@@ -7,5 +7,8 @@ public interface DBManager {
 	public void createTables();
 	
 	public DogManager getDogManager();
+	public MedicineManager getMedicineManager();
+	
+	public int getLastId();
 	
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 import db.interfaces.DogManager;
 import pojos.Dog;
+import pojos.Medicine;
 
 public class SQLiteDogManager implements DogManager {
 
@@ -73,21 +74,47 @@ public class SQLiteDogManager implements DogManager {
 
 	@Override
 	public Dog getDog(int dogId) {
+		// Get the dog AND the medicines for the dog
 		Dog newDog = null;
 		try {
-			String sql = "SELECT * FROM dogs WHERE ID = ?";
+			String sql = "SELECT * FROM dogs AS d JOIN dogsMedicines AS dm ON d.id = dm.dogId"
+					+ " JOIN medicines AS m ON dm.medicineId = m.id" + " WHERE d.id = ?";
+			// Get the joining of three tables
+			// id, name, breed, weight, admissionDate, releaseDate, dogId, medicineId, id,
+			// name
+			// EXAMPLE
+			// 1, Lassie, Collie, 10, 2020-06-01, 2020-08-01, 1, 1, 1, Dalsi
+			// 1, Lassie, Collie, 10, 2020-06-01, 2020-08-01, 1, 2, 2, Dogmotril
 			PreparedStatement p = c.prepareStatement(sql);
 			p.setInt(1, dogId);
 			ResultSet rs = p.executeQuery();
-			rs.next();
-			int id = rs.getInt("id");
-			String dogName = rs.getString("name");
-			String breed = rs.getString("breed");
-			float weight = rs.getFloat("weight");
-			Date admissionDate = rs.getDate("admissionDate");
-			Date releaseDate = rs.getDate("releaseDate");
-			// Create a new dog
-			newDog = new Dog(id, dogName, breed, weight, admissionDate, releaseDate);
+			List<Medicine> medicinesList = new ArrayList<Medicine>();
+			// WHEN YOU DO A JOIN WITH SQLITE YOU CANNOT USE COLUMN NAMES
+			// YOU MUST USE NUMBERS INSTEAD
+			// THIS IS BECAUSE SQLITE DOESN'T SUPPORT JOINS WITH ALIASES
+			// To avoid creating the dog several times
+			boolean dogCreated = false;
+			while (rs.next()) {
+				// If the dog has not been created
+				if (!dogCreated) {
+					// Get the dog information
+					int newDogId = rs.getInt(1);
+					String dogName = rs.getString(2);
+					String breed = rs.getString(3);
+					float weight = rs.getFloat(4);
+					Date admissionDate = rs.getDate(5);
+					Date releaseDate = rs.getDate(6);
+					// Create a new dog
+					newDog = new Dog(newDogId, dogName, breed, weight, admissionDate, releaseDate);
+					dogCreated = true;
+				}
+				// Get the medicine information
+				int medicineId = rs.getInt(9);
+				String medicineName = rs.getString(10);
+				Medicine newMedicine = new Medicine(medicineId, medicineName);
+				medicinesList.add(newMedicine);
+			}
+			newDog.setMedicines(medicinesList);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -113,8 +140,9 @@ public class SQLiteDogManager implements DogManager {
 				String breed = rs.getString("breed");
 				float weight = rs.getFloat("weight");
 				Date admissionDate = rs.getDate("admissionDate");
+				Date releaseDate = rs.getDate("releaseDate");
 				// Create a new dog and...
-				Dog newDog = new Dog(id, dogName, breed, weight, admissionDate);
+				Dog newDog = new Dog(id, dogName, breed, weight, admissionDate, releaseDate);
 				// Add it to the list
 				dogsList.add(newDog);
 			}
@@ -143,8 +171,9 @@ public class SQLiteDogManager implements DogManager {
 				String dogBreed = rs.getString("breed");
 				float weight = rs.getFloat("weight");
 				Date admissionDate = rs.getDate("admissionDate");
+				Date releaseDate = rs.getDate("releaseDate");
 				// Create a new dog and...
-				Dog newDog = new Dog(id, dogName, dogBreed, weight, admissionDate);
+				Dog newDog = new Dog(id, dogName, dogBreed, weight, admissionDate, releaseDate);
 				// Add it to the list
 				dogsList.add(newDog);
 			}
