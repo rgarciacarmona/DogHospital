@@ -2,13 +2,16 @@ package ui;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.security.MessageDigest;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import pojos.*;
+import pojos.users.*;
 import db.interfaces.*;
+import db.jpa.JPAUserManager;
 import db.sqlite.*;
 
 public class Menu {
@@ -17,6 +20,7 @@ public class Menu {
 	private static DBManager dbManager;
 	private static DogManager dogManager;
 	private static MedicineManager medicineManager;
+	private static UserManager userManager;
 
 	// Used for parsing dates
 	private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -29,31 +33,99 @@ public class Menu {
 		dbManager.connect();
 		dogManager = dbManager.getDogManager();
 		medicineManager = dbManager.getMedicineManager();
+		// We need to create the tables with JDBC before using JPA
+		dbManager.createTables();
+		userManager = new JPAUserManager();
+		userManager.connect();
 		// Initialize BufferedReader
 		reader = new BufferedReader(new InputStreamReader(System.in));
 		// Print welcome screen
 		System.out.println("Welcome!");
-		dbManager.createTables();
 		// Ask the user his or her role
 		while (true) {
-			System.out.println("Who are you?");
-			System.out.println("1. Doctor");
-			System.out.println("2. Owner");
+			System.out.println("What do you want to do?");
+			System.out.println("1. Create a new role");
+			System.out.println("2. Create a new user");
+			System.out.println("3. Login");
 			System.out.println("0. Exit");
 			int choice = Integer.parseInt(reader.readLine());
 			switch (choice) {
 			case 1:
-				doctorMenu();
+				// Create a new role
+				newRole();
 				break;
 			case 2:
-				ownerMenu();
+				// Create a new user
+				newUser();
+				break;
+			case 3:
+				// Login
+				login();
 				break;
 			case 0:
 				dbManager.disconnect();
+				userManager.disconnect();
 				return;
 			default:
 				break;
 			}
+		}
+	}
+	
+	private static void newRole() throws Exception {
+		System.out.println("Please type the new role information:");
+		System.out.print("Role name:");
+		String roleName = reader.readLine();
+		Role role = new Role(roleName);
+		userManager.createRole(role);
+	}
+	
+	private static void newUser() throws Exception {
+		System.out.println("Please type the new user information:");
+		System.out.print("Username:");
+		String username = reader.readLine();
+		System.out.print("Password:");
+		String password = reader.readLine();
+		// Create the password's hash
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.update(password.getBytes());
+		byte[] hash = md.digest();
+		// Show all the roles and let the user choose one
+		List<Role> roles = userManager.getRoles();
+		for (Role role : roles) {
+			System.out.println(role);
+		}
+		System.out.print("Type the chosen role id:");
+		int roleId = Integer.parseInt(reader.readLine());
+		// Get the chosen role from the database
+		Role chosenRole = userManager.getRole(roleId);
+		// Create the user and store it
+		User user = new User(username, hash, chosenRole);
+		userManager.createUser(user);
+	}
+	
+	private static void login() throws Exception {
+		System.out.println("Please input your credentials");
+		System.out.print("Username:");
+		String username = reader.readLine();
+		System.out.print("Password:");
+		String password = reader.readLine();
+		User user = userManager.checkPassword(username, password);
+		// We check if the user/password combination was OK
+		if (user == null) {
+			System.out.println("Wrong credentials, please try again!");
+		}
+		// We check the role
+		else if (user.getRole().getRole().equalsIgnoreCase("doctor")) {
+			System.out.println("Welcome doctor " + username + "!");
+			doctorMenu();
+		}
+		else if (user.getRole().getRole().equalsIgnoreCase("owner")) {
+			System.out.println("Welcome owner " + username + "!");
+			ownerMenu();
+		}
+		else {
+			System.out.println("Invalid role.");
 		}
 	}
 

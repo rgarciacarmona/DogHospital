@@ -5,6 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 
@@ -53,7 +54,7 @@ public class JPAUserManager implements UserManager {
 
 	@Override
 	public List<Role> getRoles() {
-		Query q = em.createNamedQuery("SELECT * FROM roles", Role.class);
+		Query q = em.createNativeQuery("SELECT * FROM roles", Role.class);
 		List<Role> roles = (List<Role>) q.getResultList();
 		return roles;
 	}
@@ -67,12 +68,15 @@ public class JPAUserManager implements UserManager {
 			md.update(password.getBytes());
 			byte[] hash = md.digest();
 			// Create the query
-			Query q = em.createNamedQuery("SELECT * FROM users WHERE username = ? AND password = ?", User.class);
+			Query q = em.createNativeQuery("SELECT * FROM users WHERE username = ? AND password = ?", User.class);
 			q.setParameter(1, username);
 			q.setParameter(2, hash);
 			user = (User) q.getSingleResult();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
+		} catch (NoResultException nre) {
+			// This is what happens when no result is retrieved
+			return null;
 		}
 		return user;
 	}
