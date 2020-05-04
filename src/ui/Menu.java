@@ -1,6 +1,8 @@
 package ui;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.sql.Date;
@@ -8,8 +10,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import javax.xml.bind.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
 import pojos.*;
 import pojos.users.*;
+import xml.utils.CustomErrorHandler;
 import db.interfaces.*;
 import db.jpa.JPAUserManager;
 import db.sqlite.*;
@@ -71,7 +82,7 @@ public class Menu {
 			}
 		}
 	}
-	
+
 	private static void newRole() throws Exception {
 		System.out.println("Please type the new role information:");
 		System.out.print("Role name:");
@@ -79,7 +90,7 @@ public class Menu {
 		Role role = new Role(roleName);
 		userManager.createRole(role);
 	}
-	
+
 	private static void newUser() throws Exception {
 		System.out.println("Please type the new user information:");
 		System.out.print("Username:");
@@ -103,7 +114,7 @@ public class Menu {
 		User user = new User(username, hash, chosenRole);
 		userManager.createUser(user);
 	}
-	
+
 	private static void login() throws Exception {
 		System.out.println("Please input your credentials");
 		System.out.print("Username:");
@@ -119,12 +130,10 @@ public class Menu {
 		else if (user.getRole().getRole().equalsIgnoreCase("doctor")) {
 			System.out.println("Welcome doctor " + username + "!");
 			doctorMenu();
-		}
-		else if (user.getRole().getRole().equalsIgnoreCase("owner")) {
+		} else if (user.getRole().getRole().equalsIgnoreCase("owner")) {
 			System.out.println("Welcome owner " + username + "!");
 			ownerMenu();
-		}
-		else {
+		} else {
 			System.out.println("Invalid role.");
 		}
 	}
@@ -163,6 +172,7 @@ public class Menu {
 			System.out.println("1. Admit dog");
 			System.out.println("2. Search dog by Name");
 			System.out.println("3. Search dog by Breed");
+			System.out.println("4. Admit dog through XML");
 			System.out.println("0. Back");
 			int choice = Integer.parseInt(reader.readLine());
 			switch (choice) {
@@ -174,6 +184,9 @@ public class Menu {
 				break;
 			case 3:
 				searchDogByBreed();
+				break;
+			case 4:
+				admitDogXML();
 				break;
 			case 0:
 				return;
@@ -190,6 +203,7 @@ public class Menu {
 			System.out.println("2. Update dog data");
 			System.out.println("3. Give medicine");
 			System.out.println("4. Check medicines");
+			System.out.println("5. Generate XML");
 			System.out.println("0. Back");
 			int choice = Integer.parseInt(reader.readLine());
 			switch (choice) {
@@ -201,8 +215,13 @@ public class Menu {
 				break;
 			case 3:
 				giveMedicine(dogId);
+				break;
 			case 4:
 				checkMedicines(dogId);
+				break;
+			case 5:
+				generateXML(dogId);
+				break;
 			case 0:
 				return;
 			default:
@@ -210,12 +229,80 @@ public class Menu {
 			}
 		}
 	}
-	
+
+	private static void admitDogXML() throws Exception {
+		// Create a JAXBContext
+		JAXBContext context = JAXBContext.newInstance(Dog.class);
+		// Get the unmarshaller
+		Unmarshaller unmarshal = context.createUnmarshaller();
+		// Open the file
+		File file = null;
+		boolean incorrectDog = false;
+		do {
+			System.out.println("Type the filename for the XML document (expected in the xmls folder):");
+			String fileName = reader.readLine();
+			file = new File("./xmls/" + fileName);
+			try {
+				// Create a DocumentBuilderFactory
+				DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+				// Set it up so it validates XML documents
+				dBF.setValidating(true);
+				// Create a DocumentBuilder and an ErrorHandler (to check validity)
+				DocumentBuilder builder = dBF.newDocumentBuilder();
+				CustomErrorHandler customErrorHandler = new xml.utils.CustomErrorHandler();
+				builder.setErrorHandler(customErrorHandler);
+				// Parse the XML file and print out the result
+				Document doc = builder.parse(file);
+				if (!customErrorHandler.isValid()) {
+					incorrectDog = true;
+				}
+			} catch (ParserConfigurationException ex) {
+				System.out.println(file + " error while parsing!");
+				incorrectDog = true;
+			} catch (SAXException ex) {
+				System.out.println(file + " was not well-formed!");
+				incorrectDog = true;
+			} catch (IOException ex) {
+				System.out.println(file + " was not accesible!");
+				incorrectDog = true;
+			}
+			
+		} while (incorrectDog);
+		// Unmarshall the dog from a file
+		Dog dog = (Dog) unmarshal.unmarshal(file);
+		// Print the dog
+		System.out.println("Added to the database: " + dog);
+		dogManager.admit(dog);
+		// Get the dogId from the database because the XML file doesn't have it
+		int dogId = dbManager.getLastId();
+		// For each medicine of the dog
+		List<Medicine> medicines = dog.getMedicines();
+		for (Medicine medicine : medicines) {
+			// Give the medicine to the dog
+			medicineManager.give(dogId, medicine.getId());
+		}
+	}
+
+	private static void generateXML(int dogId) throws Exception {
+		Dog dog = dogManager.getDog(dogId);
+		// Create a JAXBContext
+		JAXBContext context = JAXBContext.newInstance(Dog.class);
+		// Get the marshaller
+		Marshaller marshal = context.createMarshaller();
+		// Pretty formatting
+		marshal.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		// Marshall the dog to a file
+		File file = new File("./xmls/Output-Dog.xml");
+		marshal.marshal(dog, file);
+		// Marshall the dog to the screen
+		marshal.marshal(dog, System.out);
+	}
+
 	private static void checkMedicines(int dogId) throws Exception {
 		Dog dog = dogManager.getDog(dogId);
 		System.out.println(dog);
 	}
-	
+
 	private static void giveMedicine(int dogId) throws Exception {
 		// Show all the available medicines
 		List<Medicine> medicinesList = medicineManager.showMedicines();
@@ -227,7 +314,7 @@ public class Menu {
 		int medicineId = Integer.parseInt(reader.readLine());
 		// Give the medicine to the dog
 		medicineManager.give(dogId, medicineId);
-		
+
 	}
 
 	private static void updateDog(int dogId) throws Exception {

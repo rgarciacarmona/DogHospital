@@ -4,14 +4,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.*;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(propOrder = {"name"})
 public class Medicine implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7683312764530492550L;
+	@XmlAttribute
 	private Integer id;
+	@XmlElement
 	private String name;
+	@XmlTransient
 	private List<Dog> dogs;
 	
 	public Medicine() {

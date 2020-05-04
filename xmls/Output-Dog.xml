@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dog name="Pugsie">
+    <breed>Pug</breed>
+    <weight>10.0</weight>
+    <admissionDate>2020-05-04</admissionDate>
+    <releaseDate>2020-06-04</releaseDate>
+    <medicines>
+        <medicine id="1">
+            <name>Dalsi</name>
+        </medicine>
+        <medicine id="2">
+            <name>Dogmotril</name>
+        </medicine>
+        <medicine id="3">
+            <name>Antiparasitics</name>
+        </medicine>
+    </medicines>
+</dog>

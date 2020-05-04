@@ -1,0 +1,12 @@
+<!DOCTYPE dog [
+	<!ELEMENT dog (breed, weight, admissionDate, releaseDate?, medicines?)>
+	<!ATTLIST dog name CDATA #REQUIRED>
+	<!ELEMENT breed (#PCDATA)>
+	<!ELEMENT weight (#PCDATA)>
+	<!ELEMENT admissionDate (#PCDATA)>
+	<!ELEMENT releaseDate (#PCDATA)>
+	<!ELEMENT medicines (medicine+)>
+	<!ELEMENT medicine (name)>
+	<!ATTLIST medicine id CDATA #REQUIRED>
+	<!ELEMENT name (#PCDATA)>
+]>

@@ -5,19 +5,43 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import xml.utils.SQLDateAdapter;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "dog")
+@XmlType(propOrder = {"name", "breed", "weight", "admissionDate", "releaseDate", "medicines"})
 public class Dog implements Serializable {
 
+	// <element attribute="value">text or other elements</element>
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6891296751142184360L;
 
+	@XmlTransient
+	// In some cases, you might prefer to use @XmlAttribute
 	private Integer id;
+	@XmlAttribute
 	private String name;
+	@XmlElement
 	private String breed;
+	@XmlElement
 	private Float weight;
+	@XmlJavaTypeAdapter(SQLDateAdapter.class)
 	private Date admissionDate;
+	@XmlJavaTypeAdapter(SQLDateAdapter.class)
 	private Date releaseDate;
+	// <dog>
+	//   <medicines> <-- Wrapper
+	//	   <medicine></medicine>
+	//	   <medicine></medicine>
+	//   </medicines>
+	// </dog>
+	@XmlElement(name = "medicine")
+	@XmlElementWrapper(name = "medicines")
 	private List<Medicine> medicines;
 
 	public Dog(Integer id, String name, String breed, Float weight, Date admissionDate) {
